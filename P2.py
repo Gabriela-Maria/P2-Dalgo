@@ -1,6 +1,6 @@
 import sys
 
-
+## CLASES 
 class Vertice:
     def __init__(self, masa, carga):
         self.masa = masa
@@ -17,7 +17,8 @@ class Conexion:
 
     def __repr__(self):
         return f"Conexion(origen={self.origen}, destino={self.destino}, costo={self.costo})"   
-    
+
+## FUNCIONES    
 def cargar_conexiones(data):
     lines = data.strip().split("\n") # divide todas las lineas si hay un enter
     index = 0
@@ -50,6 +51,8 @@ def cargar_conexiones(data):
         all_cases.append(conexiones)
     
     return all_cases
+
+
 
 # Example usage
 if __name__ == "__main__":
