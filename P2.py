@@ -1,6 +1,7 @@
 import sys
 
 ## CLASES 
+
 class Vertice:
     def __init__(self, masa, carga):
         self.masa = masa
@@ -17,44 +18,78 @@ class Conexion:
 
     def __repr__(self):
         return f"Conexion(origen={self.origen}, destino={self.destino}, costo={self.costo})"   
+    
+class Grafo:
+    def __init__(self):
+        self.vertices = []
+        self.conexiones = []  
 
-## FUNCIONES    
+    def add_conexion(self, conexion):
+        self.conexiones.append(conexion)
+        if conexion.origen not in self.vertices:
+            self.vertices.append(conexion.origen)
+        if conexion.destino not in self.vertices:
+            self.vertices.append(conexion.destino)          
+
+    def add_conexion_opuesta(self):
+        self          
+
+    def __repr__(self):
+        return f"Vertices: {(self.vertices)} , conexiones:{(self.conexiones)}"
+
+## FUNCIONES PARTE 1
+    
 def cargar_conexiones(data):
-    lines = data.strip().split("\n") # divide todas las lineas si hay un enter
+    lineas = data.strip().split("\n") # divide todas las lineas si hay un enter
     index = 0
-    num_cases = int(lines[index]) #saca la cantidad de casos
+    cant_casos = int(lineas[index]) #saca la cantidad de casos
     index += 1 #empieza a contar a partir de la segunda linea
     all_cases = []
     
-    for _ in range(num_cases):
-        n, w1, w2 = map(int, lines[index].split())  # lee la linea del primer caso
+    for _ in range(cant_casos):
+        n, w1, w2 = map(int, lineas[index].split())  # lee la linea del primer caso
         index += 1
-        conexiones = []
+        grafo = Grafo()
         
         for _ in range(n):
-            origen, destino = map(int, lines[index].split())
+            origen, destino = map(int, lineas[index].split())
 
             masa_origen = abs(origen)
-            carga_origen = "-" if masa_origen <0 else "+"
+            carga_origen = "-" if origen < 0 else "+"
             origen = Vertice(masa_origen,carga_origen)
 
             masa_destino = abs(destino)
-            carga_destino = "-" if masa_destino <0 else "+"
+            carga_destino = "-" if destino < 0 else "+"
             destino = Vertice(masa_destino,carga_destino)
 
             costo =  (1 + abs(w1-w2) % w1) if (carga_origen == carga_destino) else (w2 - abs(w1-w2) % w2)
 
             conexion = Conexion(origen, destino,costo) 
-            conexiones.append(conexion)
+            grafo.add_conexion(conexion)
             index += 1
         
-        all_cases.append(conexiones)
+        all_cases.append(grafo)
     
     return all_cases
 
+def crear_grafo_vertices_opuestos(grafo): #crear un grafo conectado para hacerle dijkstra n veces
+    nuevos_vertices = []
+    original_vertices = set(grafo.vertices)
+    for vertice in grafo.vertices:
+        carga_opuesta = "-" if vertice.carga == "+" else  "+"
+        vertice_opuesto = Vertice(vertice.masa, carga_opuesta)
+        if vertice_opuesto not in original_vertices:
+            nuevos_vertices.append(vertice_opuesto)
+    unique_vertices = list(dict.fromkeys(nuevos_vertices, None))
+    return unique_vertices
 
-  #  def crear_grafo(conexiones):
 
+
+#dijkstra normal
+
+#dijkstra grande
+
+# metodo para crear el nuevo grafo
 
 # Example usage
 if __name__ == "__main__":
@@ -67,6 +102,10 @@ if __name__ == "__main__":
                 1 2
                 -2 3
                 3 -4"""
-    result = cargar_conexiones(data)
-    for case_conexiones in result:
-        print(case_conexiones)
+result = cargar_conexiones(data)
+print(result)
+for grafo in result:
+    unique_vertices = crear_grafo_vertices_opuestos(grafo)
+    print("Unique vertices with opposite charges added:")
+    for vertex in unique_vertices:
+        print(vertex,"vertice jeje")
