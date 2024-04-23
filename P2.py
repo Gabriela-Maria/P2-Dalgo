@@ -87,8 +87,6 @@ def grafo_completo(grafo):
          grafo.add_conexion(conexion)     
     return grafo        
 
-
-
 #dijkstra normal
 
 #dijkstra grande
@@ -96,22 +94,29 @@ def grafo_completo(grafo):
 # metodo para crear el nuevo grafo
 
 # Example usage
+def escribir_resultados(result, output_file):
+    with open(output_file, 'w') as f:
+        f.write(str(result))
+    print ("Se escribio en el archivo P2.out")
+        
 if __name__ == "__main__":
-    data = """  2
-                3 3 5
-                1 3
-                -6 3
-                1 7
-                3 2 3
-                1 2
-                -2 3
-                3 -4"""
-result = cargar_conexiones(data)
-result = grafo_vertices_opuestos(result)
-result = grafo_completo(result)
-print(result)
-for grafo in result:
-    unique_vertices = grafo_vertices_opuestos(grafo)
-    print("Unique vertices with opposite charges added:")
-    for vertex in unique_vertices:
-        print(vertex,"vertice jeje")
+    if len(sys.argv) != 3:
+        print("Entradas esperadas: python script.py archivo_entrada.in archivo_salida.out\nIntente otravez")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+
+    with open(input_file, 'r') as f:
+        data = f.read()
+        
+#hay que cambiar esto por el resultado q queramos
+    result = cargar_conexiones(data)
+    escribir_resultados(result, output_file)
+
+##para probarlo hacerlo desde la terminal
+## cuando este en P2-Dalgo:
+#   python a compilar |  archivo in  |    archivo out
+#   python P2.py      |      P2.in   |      P2.out
+
+# python P2.py P2.in P2.out
