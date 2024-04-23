@@ -80,8 +80,8 @@ def crear_grafo_vertices_opuestos(grafo): #crear un grafo conectado para hacerle
         vertice_opuesto = Vertice(vertice.masa, carga_opuesta)
         if vertice_opuesto not in original_vertices:
             nuevos_vertices.append(vertice_opuesto)
-    unique_vertices = list(dict.fromkeys(nuevos_vertices, None))
-    return unique_vertices
+    vertices_sin_repetir = list(dict.fromkeys(nuevos_vertices, None))
+    return vertices_sin_repetir
 
 
 
