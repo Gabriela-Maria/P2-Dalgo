@@ -31,8 +31,8 @@ class Grafo:
         if conexion.destino not in self.vertices:
             self.vertices.append(conexion.destino)          
 
-    def add_conexion_opuesta(self):
-        self          
+    def add_vertice(self,vertice):
+        self.vertices.append(vertice)          
 
     def __repr__(self):
         return f"Vertices: {(self.vertices)} , conexiones:{(self.conexiones)}"
@@ -57,13 +57,11 @@ def cargar_conexiones(data):
             masa_origen = abs(origen)
             carga_origen = "-" if origen < 0 else "+"
             origen = Vertice(masa_origen,carga_origen)
-
             masa_destino = abs(destino)
             carga_destino = "-" if destino < 0 else "+"
             destino = Vertice(masa_destino,carga_destino)
 
             costo =  (1 + abs(w1-w2) % w1) if (carga_origen == carga_destino) else (w2 - abs(w1-w2) % w2)
-
             conexion = Conexion(origen, destino,costo) 
             grafo.add_conexion(conexion)
             index += 1
@@ -72,16 +70,22 @@ def cargar_conexiones(data):
     
     return all_cases
 
-def crear_grafo_vertices_opuestos(grafo): #crear un grafo conectado para hacerle dijkstra n veces
-    nuevos_vertices = []
+def grafo_vertices_opuestos(grafo): #crear un grafo conectado para hacerle dijkstra n veces
     original_vertices = set(grafo.vertices)
     for vertice in grafo.vertices:
         carga_opuesta = "-" if vertice.carga == "+" else  "+"
         vertice_opuesto = Vertice(vertice.masa, carga_opuesta)
-        if vertice_opuesto not in original_vertices:
-            nuevos_vertices.append(vertice_opuesto)
-    vertices_sin_repetir = list(dict.fromkeys(nuevos_vertices, None))
-    return vertices_sin_repetir
+        if vertice_opuesto not in original_vertices and vertice_opuesto not in grafo.vertices:
+            grafo.add_vertice(vertice_opuesto)
+    return grafo
+
+def grafo_completo(grafo):
+    vertices = grafo.vertices
+    for vertice_origen in vertices:
+        for vertice_destino in vertices:
+         conexion = Conexion(vertice_origen,vertice_destino)
+         grafo.add_conexion(conexion)     
+    return grafo        
 
 
 
@@ -103,9 +107,11 @@ if __name__ == "__main__":
                 -2 3
                 3 -4"""
 result = cargar_conexiones(data)
+result = grafo_vertices_opuestos(result)
+result = grafo_completo(result)
 print(result)
 for grafo in result:
-    unique_vertices = crear_grafo_vertices_opuestos(grafo)
+    unique_vertices = grafo_vertices_opuestos(grafo)
     print("Unique vertices with opposite charges added:")
     for vertex in unique_vertices:
         print(vertex,"vertice jeje")
