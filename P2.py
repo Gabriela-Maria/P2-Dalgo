@@ -44,7 +44,7 @@ def cargar_conexiones(data):
 
             costo =  (1 + abs(w1-w2) % w1) if (carga_origen == carga_destino) else (w2 - abs(w1-w2) % w2)
 
-            conexion = Conexion(origen, destino,costo) # falta añadir el costo
+            conexion = Conexion(origen, destino,costo) 
             conexiones.append(conexion)
             index += 1
         
@@ -52,6 +52,8 @@ def cargar_conexiones(data):
     
     return all_cases
 
+
+  #  def crear_grafo(conexiones):
 
 
 # Example usage
