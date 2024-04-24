@@ -42,9 +42,14 @@ class Conexion:
         self.destino = destino
         self.costo=costo
         self.tipo = ""
+    def get_costo (self, vertice1, vertice2):
+        if (vertice1 == self.origen or vertice1 == self.destino) and (vertice2 == self.origen or vertice2 == self.destino):
+            return self.costo
 
     def __repr__(self):
-        return f"Conexion(origen={self.origen}, destino={self.destino}, costo={self.costo})"   
+        return f"Conexion(origen={self.origen}, destino={self.destino}, costo={self.costo})"  
+    
+ 
     
 class Grafo:
     def __init__(self):
@@ -63,21 +68,46 @@ class Grafo:
         self.vertices.append(vertice)          
 
     def crear_matriz_ady(self):
+        
         count = -1
         for vertice in self.vertices:
             self.matriz_ady.append([])
             count +=1
             self.diccionario_indices[vertice] = count
         for conexion in self.conexiones:
-            #print (conexion)
             for indice in self.diccionario_indices.keys():
-                #print (indice)
                 if conexion.origen == indice and self.diccionario_indices.get(conexion.destino) not in self.matriz_ady[self.diccionario_indices.get(indice)]:
                     self.matriz_ady[self.diccionario_indices.get(indice)].append(self.diccionario_indices.get(conexion.destino))
                 if conexion.destino == indice and self.diccionario_indices.get(conexion.origen) not in self.matriz_ady[self.diccionario_indices.get(indice)]:
                     self.matriz_ady[self.diccionario_indices.get(indice)].append(self.diccionario_indices.get(conexion.origen))
         print (self.diccionario_indices)
         return self.matriz_ady    
+
+    def determinar_si_se_puede(self) -> bool:
+        conteo  = {}
+        impares = 0
+        print (self.conexiones)
+        for conexion in self.conexiones:
+            origen = str(conexion.origen.masa) + str(conexion.origen.carga)
+            destino = str(conexion.destino.masa)+ str(conexion.destino.carga)
+            if  origen not in conteo.keys():
+                conteo[origen] = 0
+            elif origen in conteo.keys():
+                conteo[origen] +=1
+            
+            if destino not in conteo.keys():
+                conteo[destino] = 0
+            elif destino in conteo.keys():
+                conteo[destino] +=1
+        print (conteo)
+        for vertice in conteo:
+            if conteo[vertice]%2 != 0:
+                impares +=1
+        print (impares)
+        if impares > 2 or impares == 1:
+            return False
+        print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!si")
+        return True
 
     def __repr__(self):
         return f"Vertices: \n" + "\n".join([str(vertice) for vertice in self.vertices]) + "\n" \
@@ -94,17 +124,22 @@ class Caso:
         self.output_file = output_file
         
         self.grafo, self.vertices_fundamentales = self.cargar_grafo(lineas)
-        
-        self.grafo, self.vertices_libres = self.grafo_vertices_opuestos(self.grafo)
-        
-        self.grafo_completo = self.crear_grafo_completo(self.grafo)
-        
-        self.escribir_resultado(self.grafo_completo, output_file)
+        ################################################################################# DETERMINA SI SE PUEDE HACER O NO :)
+        rpsta = self.grafo.determinar_si_se_puede()
+        if rpsta == False:
+            self.escribir_resultado("NO SE PUEDE", output_file)
+        else:
+            self.grafo, self.vertices_libres = self.grafo_vertices_opuestos(self.grafo)
+            
+            self.grafo_completo = self.crear_grafo_completo(self.grafo)
+            
+                    
+            self.escribir_resultado(self.grafo_completo, output_file)
 
-        camino_minimo, costo_minimo = self.camino_minimo_vertices_fundamentales()
-        print(f"El costo minimo es {costo_minimo}")
-        print(f"El camino minimo es {camino_minimo}")
-        
+            camino_minimo, costo_minimo = self.camino_minimo_vertices_fundamentales()
+            print(f"El costo minimo es {costo_minimo}")
+            print(f"El camino minimo es {camino_minimo}")
+            
     def calcular_costo(self, vertice1, vertice2):
         return (1 + abs(vertice1.masa-vertice2.masa) % self.w1) if (vertice1.carga == vertice2.carga) else (self.w2 - abs(vertice1.masa-vertice2.masa) % self.w2)
     
@@ -228,6 +263,7 @@ class Caso:
 
 
 ## RESUELVE TODOO
+    
 def resolver_casos( input_file, output_file):
     
     with open(input_file, 'r') as f:
@@ -250,7 +286,7 @@ def resolver_casos( input_file, output_file):
         index += n
         caso_actual = Caso(case_count, n, w1, w2, case, output_file)
         case_count += 1
-        break # Esto toca quitarlo ,es solo para mirar solo el primer caso jeje
+         # Esto toca quitarlo ,es solo para mirar solo el primer caso jeje
 
         
 if __name__ == "__main__":
