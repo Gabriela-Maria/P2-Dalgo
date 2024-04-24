@@ -1,1 +1,42 @@
-[Vertices: [Vertice(masa=1, carga=+), Vertice(masa=3, carga=+), Vertice(masa=6, carga=-), Vertice(masa=3, carga=+), Vertice(masa=1, carga=+), Vertice(masa=7, carga=+)] , conexiones:[Conexion(origen=Vertice(masa=1, carga=+), destino=Vertice(masa=3, carga=+), costo=3), Conexion(origen=Vertice(masa=6, carga=-), destino=Vertice(masa=3, carga=+), costo=3), Conexion(origen=Vertice(masa=1, carga=+), destino=Vertice(masa=7, carga=+), costo=3)], Vertices: [Vertice(masa=1, carga=+), Vertice(masa=2, carga=+), Vertice(masa=2, carga=-), Vertice(masa=3, carga=+), Vertice(masa=3, carga=+), Vertice(masa=4, carga=-)] , conexiones:[Conexion(origen=Vertice(masa=1, carga=+), destino=Vertice(masa=2, carga=+), costo=2), Conexion(origen=Vertice(masa=2, carga=-), destino=Vertice(masa=3, carga=+), costo=2), Conexion(origen=Vertice(masa=3, carga=+), destino=Vertice(masa=4, carga=-), costo=2)]]
+Case 0: Vertices: 
+Vertice(masa=1, carga=+), tipo=fundamental
+Vertice(masa=3, carga=+), tipo=fundamental
+Vertice(masa=6, carga=-), tipo=fundamental
+Vertice(masa=3, carga=+), tipo=fundamental
+Vertice(masa=1, carga=+), tipo=fundamental
+Vertice(masa=7, carga=+), tipo=fundamental
+Vertice(masa=6, carga=+), tipo=libre
+Vertice(masa=7, carga=-), tipo=libre
+Vertice(masa=3, carga=-), tipo=libre
+Vertice(masa=1, carga=-), tipo=libre
+Conexiones: 
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=+), tipo=fundamental, costo=9223372036854775807)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=3, carga=+), tipo=fundamental, costo=9223372036854775807)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=7, carga=+), tipo=fundamental, costo=9223372036854775807)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=6, carga=+), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=7, carga=-), tipo=libre, costo=4)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=6, carga=+), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=7, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=7, carga=-), tipo=libre, costo=2)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=6, carga=-), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=6, carga=+), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=7, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=3, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=6, carga=+), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=7, carga=-), tipo=libre, costo=4)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=1, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=3)
+Conexion(origen=Vertice(masa=7, carga=+), tipo=fundamental, destino=Vertice(masa=6, carga=+), tipo=libre, costo=2)
+Conexion(origen=Vertice(masa=7, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=7, carga=+), tipo=fundamental, destino=Vertice(masa=3, carga=-), tipo=libre, costo=1)
+Conexion(origen=Vertice(masa=7, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=4)
+Conexion(origen=Vertice(masa=7, carga=+), tipo=fundamental, destino=Vertice(masa=1, carga=-), tipo=libre, costo=4)
+
