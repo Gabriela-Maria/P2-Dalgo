@@ -8,16 +8,18 @@ class Vertice:
         self.masa = masa
         self.carga = carga
         self.pareja = None
+        self.tipo = "libre"
     
     def add_pareja(self, vertice):
         self.pareja = vertice
-
+        self.tipo = "fundamental"
+        
     def es_opuesto(self, vertice):
         return self.masa == vertice.masa and self.carga != vertice.carga  
 
     def __repr__(self):
-        tipo = "fundamental" if self.pareja is not None else "libre" # esto es solo para imprimirlo  con repr, se puede borrar
-        return f"Vertice(masa={self.masa}, carga={self.carga}), tipo={tipo}"
+        self.tipo = "fundamental" if self.pareja is not None else "libre" # esto es solo para imprimirlo  con repr, se puede borrar
+        return f"Vertice(masa={self.masa}, carga={self.carga}), tipo={self.tipo}"
 
     def __eq__(self, other):
         # Compara si otro objeto de 'Vertice' es igual a este.
@@ -49,8 +51,6 @@ class Conexion:
     def __repr__(self):
         return f"Conexion(origen={self.origen}, destino={self.destino}, costo={self.costo})"  
     
- 
-    
 class Grafo:
     def __init__(self):
         self.vertices = []
@@ -67,8 +67,28 @@ class Grafo:
     def add_vertice(self,vertice):
         self.vertices.append(vertice)          
 
+    def vertices_fundamentales_repetidos(self):
+        self.cuenta_vertices_fundamentales_dic ={}
+        self.verticesf={}
+        for vertice in self.vertices:
+            entrada = str(vertice.masa) + str(vertice.carga)
+            if entrada in self.cuenta_vertices_fundamentales_dic:
+                self.cuenta_vertices_fundamentales_dic[entrada] += 1
+                self.verticesf[entrada].append(vertice)
+            elif entrada not in self.cuenta_vertices_fundamentales_dic.keys() and vertice.tipo == "fundamental":
+                self.cuenta_vertices_fundamentales_dic[entrada] = 1
+                self.verticesf[entrada]= [vertice]
+        self.entradas_repetidas = []
+        self.verticesf_repetidos = []
+        for verticef in self.cuenta_vertices_fundamentales_dic.keys():
+            if self.cuenta_vertices_fundamentales_dic[verticef] >= 2:
+                self.entradas_repetidas.append(verticef)
+        for verticef in self.entradas_repetidas:
+            self.verticesf_repetidos.append(self.verticesf[verticef])
+        return self.verticesf_repetidos
+
     def crear_matriz_ady(self):
-        self.matriz_ady = [[0] * len(self.vertices) for _ in range(len(self.vertices))]  # Inicializa la matriz de adyacencia con ceros
+        self.matriz_ady = [[0] * len(self.vertices) for _ in range(len(self.vertices))]
         count = 0
         for vertice_f in self.vertices:
             self.diccionario_indices[vertice_f] = count
@@ -81,6 +101,7 @@ class Grafo:
                     self.matriz_ady[v1][v2] = conexion.costo 
                 if conexion.destino == indice and self.matriz_ady[v2][v1] == 0:
                     self.matriz_ady[v2][v1] = conexion.costo 
+        #print (self.diccionario_indices)        
 
         return self.matriz_ady, self.diccionario_indices
 
@@ -106,6 +127,29 @@ class Grafo:
             return False
         return True
 
+    def dijkstra(self, nodo_inicio):
+        distancias = [float('inf')] * len(self.vertices)
+        distancias[nodo_inicio] = 0
+        visitados = [False] * len(self.vertices)
+        caminos = [[] for _ in range(len(self.vertices))] 
+        
+        for _ in range(len(self.vertices)):
+            min_distancia = float('inf')
+            min_vertice = -1
+            for v in range(len(self.vertices)):
+                if not visitados[v] and distancias[v] < min_distancia:
+                    min_distancia = distancias[v]
+                    min_vertice = v
+            visitados[min_vertice] = True
+            
+            for v in range(len(self.vertices)):
+                if (not visitados[v]) and (self.matriz_ady[min_vertice][v] != 0):
+                    nueva_distancia = distancias[min_vertice] + self.matriz_ady[min_vertice][v]
+                    if nueva_distancia < distancias[v]:
+                        distancias[v] = nueva_distancia
+                        caminos[v] = caminos[min_vertice] + [min_vertice]
+        return distancias, caminos
+
     def __repr__(self):
         return f"Vertices: \n" + "\n".join([str(vertice) for vertice in self.vertices]) + "\n" \
                 + "Conexiones: \n" + "\n".join([str(conexion) for conexion in self.conexiones]) + "\n"
@@ -130,12 +174,15 @@ class Caso:
             
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
-    
-            print("Matriz de Adyacencia:")
-            print (self.matriz_grafo)
             
-            print("Diccionario de Índices:")
-            print(self.diccionario_indices)   
+            ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
+            self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
+            
+            #TODO: HAY QUE CORREGIR LO DE LOS COSTOS DE LOS VERTICES LIBRES
+            distancias, caminos = self.grafo_completo.dijkstra(0)
+            
+            ## IMPRIME LA DISTANCIA DESE EL VERTICE 0 HASTA TODOS LOS NODOS, Y SUS RESPECTIVOS CAMINOS
+            respuesta_dijkstra(distancias, caminos)
                     
             self.escribir_resultado(self.grafo_completo, output_file)
 
@@ -188,6 +235,7 @@ class Caso:
     
     def crear_grafo_completo(self, grafo):
         # Vamos a conectar todos los vertices fundamentales con cada vertice libre, pero no se pueden conectar vertices con la misma masa. 
+        #TODO: CORREGIR LO DE LOS COSTOS DE LOS ATOMOS LIBRES
         for vertice_fund in self.vertices_fundamentales:
             for vertice_libre in self.vertices_libres:
                 if vertice_fund.masa != vertice_libre.masa:
@@ -211,9 +259,7 @@ class Caso:
             costo_minimo = min(costo, costo_minimo)
         return camino_minimo, costo_minimo
             
-            
-            
-            
+    #TODO: YO DIGO QUE ESTO HAY QUE BORRARLO XD
     # ESTO TOCA CAMBIARLO XD, TAMBIEN QUEREMOS PARA ESTO LA MATRIZ DE ADYACENCIAS         
     def dijkstra(self, vertice_source, vertice_destino):
         # Dijkstra, retorna el camino mínimo y el costo mínimo
@@ -261,7 +307,17 @@ class Caso:
             f.write(f"Case {self.case_id}: {result}\n")
 
         print (f"Se escribio en el archivo P2.out para el caso {self.case_id}")
+        
+#FUNCIONES ADICIONALES QUE SE EJECUTAN POR CASO
+def respuesta_dijkstra(distancias, caminos):
+    print("Distancias más cortas desde el nodo de inicio:")
+    for i, distancia in enumerate(distancias):
+        print(f"Nodo {i}: {distancia}")
 
+    print("\nCaminos mínimos desde el nodo de inicio:")
+    for i, camino in enumerate(caminos):
+        print(f"Nodo {i}: {camino + [i]}")
+#TODO: Funcion para ejecutar dijkstra en todos los vertices necesarios
 
 
 ## RESUELVE TODOO
