@@ -68,25 +68,25 @@ class Grafo:
         self.vertices.append(vertice)          
 
     def crear_matriz_ady(self):
-        
-        count = -1
-        for vertice in self.vertices:
-            self.matriz_ady.append([])
+        self.matriz_ady = [[0] * len(self.vertices) for _ in range(len(self.vertices))]  # Inicializa la matriz de adyacencia con ceros
+        count = 0
+        for vertice_f in self.vertices:
+            self.diccionario_indices[vertice_f] = count
             count +=1
-            self.diccionario_indices[vertice] = count
         for conexion in self.conexiones:
             for indice in self.diccionario_indices.keys():
-                if conexion.origen == indice and self.diccionario_indices.get(conexion.destino) not in self.matriz_ady[self.diccionario_indices.get(indice)]:
-                    self.matriz_ady[self.diccionario_indices.get(indice)].append(self.diccionario_indices.get(conexion.destino))
-                if conexion.destino == indice and self.diccionario_indices.get(conexion.origen) not in self.matriz_ady[self.diccionario_indices.get(indice)]:
-                    self.matriz_ady[self.diccionario_indices.get(indice)].append(self.diccionario_indices.get(conexion.origen))
-        print (self.diccionario_indices)
-        return self.matriz_ady    
+                v1 = self.diccionario_indices[conexion.origen]
+                v2 = self.diccionario_indices[conexion.destino]
+                if conexion.origen == indice and self.matriz_ady[v1][v2] == 0:
+                    self.matriz_ady[v1][v2] = conexion.costo 
+                if conexion.destino == indice and self.matriz_ady[v2][v1] == 0:
+                    self.matriz_ady[v2][v1] = conexion.costo 
+
+        return self.matriz_ady, self.diccionario_indices
 
     def determinar_si_se_puede(self) -> bool:
         conteo  = {}
         impares = 0
-        print (self.conexiones)
         for conexion in self.conexiones:
             origen = str(conexion.origen.masa) + str(conexion.origen.carga)
             destino = str(conexion.destino.masa)+ str(conexion.destino.carga)
@@ -99,14 +99,11 @@ class Grafo:
                 conteo[destino] = 0
             elif destino in conteo.keys():
                 conteo[destino] +=1
-        print (conteo)
         for vertice in conteo:
             if conteo[vertice]%2 != 0:
                 impares +=1
-        print (impares)
         if impares > 2 or impares == 1:
             return False
-        print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!si")
         return True
 
     def __repr__(self):
@@ -132,7 +129,13 @@ class Caso:
             self.grafo, self.vertices_libres = self.grafo_vertices_opuestos(self.grafo)
             
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
+            self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
+    
+            print("Matriz de Adyacencia:")
+            print (self.matriz_grafo)
             
+            print("Diccionario de Índices:")
+            print(self.diccionario_indices)   
                     
             self.escribir_resultado(self.grafo_completo, output_file)
 
@@ -254,7 +257,6 @@ class Caso:
         
     
     def escribir_resultado(self, result, output_file):
-        
         with open(output_file, 'a') as f:
             f.write(f"Case {self.case_id}: {result}\n")
 
