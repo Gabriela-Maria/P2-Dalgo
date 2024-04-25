@@ -240,9 +240,13 @@ class Caso:
             for vertice_libre in self.vertices_libres:
                 if vertice_fund.masa != vertice_libre.masa:
                     costo = self.calcular_costo(vertice_fund, vertice_libre)
-                    conexion = Conexion(vertice_fund, vertice_libre, costo)
-                    grafo.add_conexion(conexion)
-        
+                    conexion_f_l = Conexion(vertice_fund, vertice_libre, costo)
+                    grafo.add_conexion(conexion_f_l)
+                for vertice_libre_2 in self.vertices_fundamentales:
+                    conexion_l_l = Conexion(vertice_libre, vertice_libre_2, costo)
+                    costo = self.calcular_costo(vertice_libre, vertice_libre_2)
+                    grafo.add_conexion(conexion_l_l)
+
         return grafo
     
     def camino_minimo_vertices_fundamentales(self):
