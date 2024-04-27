@@ -170,7 +170,7 @@ class Caso:
         if rpsta == False:
             self.escribir_resultado("NO SE PUEDE", output_file)
         else:
-            self.grafo, self.vertices_libres = self.grafo_vertices_opuestos(self.grafo)
+            self.grafo, self.vertices_libres = self.grafo_vertices_libres(self.grafo)
             
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
@@ -182,7 +182,7 @@ class Caso:
             distancias, caminos = self.grafo_completo.dijkstra(0)
             
             ## IMPRIME LA DISTANCIA DESE EL VERTICE 0 HASTA TODOS LOS NODOS, Y SUS RESPECTIVOS CAMINOS
-            respuesta_dijkstra(distancias, caminos)
+            respuesta_dijkstra(self.grafo_completo, distancias, caminos)
                     
             self.escribir_resultado(self.grafo_completo, output_file)
 
@@ -218,19 +218,25 @@ class Caso:
             conexion = Conexion(origen, destino,costo)
             grafo.add_conexion(conexion)
             index += 1
-            
         return grafo, vertices_fundamentales
 
-    def grafo_vertices_opuestos(self, grafo): #crear un grafo conectado para hacerle dijkstra n veces
-        original_vertices = set(grafo.vertices)
-        vertices_libres = []
-        for vertice in original_vertices:
-            carga_opuesta = "-" if vertice.carga == "+" else  "+"
-            vertice_opuesto = Vertice(vertice.masa, carga_opuesta)
-            vertices_libres.append(vertice_opuesto)
-            if vertice_opuesto not in original_vertices and vertice_opuesto not in grafo.vertices:
-                grafo.add_vertice(vertice_opuesto)
-        return grafo, vertices_libres
+    def grafo_vertices_libres(self, grafo): #crear un grafo conectado para hacerle dijkstra n veces
+            original_vertices = set(grafo.vertices)
+            vertices_libres = []
+            for vertice in original_vertices:
+                carga_opuesta = "-" if vertice.carga == "+" else  "+"
+                vertice_opuesto = Vertice(vertice.masa, carga_opuesta)
+                if vertice_opuesto not in original_vertices and vertice_opuesto not in grafo.vertices:
+                    grafo.add_vertice(vertice_opuesto)
+                    vertices_libres.append(vertice_opuesto)
+                
+                vertice_real_libre = Vertice(vertice.masa, vertice.carga)
+                if vertice_real_libre not in original_vertices and vertice_real_libre not in grafo.vertices:
+                    grafo.add_vertice(vertice_real_libre)
+                    vertices_libres.append(vertice_real_libre)
+                
+                
+            return grafo, vertices_libres
     
     
     def crear_grafo_completo(self, grafo):
@@ -241,11 +247,22 @@ class Caso:
                 if vertice_fund.masa != vertice_libre.masa:
                     costo = self.calcular_costo(vertice_fund, vertice_libre)
                     conexion_f_l = Conexion(vertice_fund, vertice_libre, costo)
-                    grafo.add_conexion(conexion_f_l)
-                for vertice_libre_2 in self.vertices_fundamentales:
-                    conexion_l_l = Conexion(vertice_libre, vertice_libre_2, costo)
-                    costo = self.calcular_costo(vertice_libre, vertice_libre_2)
-                    grafo.add_conexion(conexion_l_l)
+                    if not any(conex.origen == vertice_fund and conex.destino == vertice_libre for conex in grafo.conexiones):
+                        conexion_f_l = Conexion(vertice_fund, vertice_libre, costo)
+                        grafo.add_conexion(conexion_f_l)
+
+        for i in range(len(self.vertices_libres)):
+            for j in range(i + 1, len(self.vertices_libres)):
+                vertice_libre1 = self.vertices_libres[i]
+                vertice_libre2 = self.vertices_libres[j]
+                if vertice_libre1.masa != vertice_libre2.masa:  
+                    costo = self.calcular_costo(vertice_libre1, vertice_libre2)
+                    conexion_l_l = Conexion(vertice_libre1, vertice_libre2, costo)
+                    if not any(conex.origen == vertice_libre1 and conex.destino == vertice_libre2 for conex in grafo.conexiones):
+                        grafo.add_conexion(conexion_l_l)
+                        conexion_l_l_inversa = Conexion(vertice_libre2, vertice_libre1, costo)
+                        grafo.add_conexion(conexion_l_l_inversa)                    
+            
 
         return grafo
     
@@ -313,14 +330,25 @@ class Caso:
         print (f"Se escribio en el archivo P2.out para el caso {self.case_id}")
         
 #FUNCIONES ADICIONALES QUE SE EJECUTAN POR CASO
-def respuesta_dijkstra(distancias, caminos):
+def respuesta_dijkstra(grafo, distancias, caminos):
     print("Distancias más cortas desde el nodo de inicio:")
     for i, distancia in enumerate(distancias):
-        print(f"Nodo {i}: {distancia}")
+        if i < len(grafo.vertices):
+            vertice_info = (f"Nodo {i} (masa={grafo.vertices[i].masa}, "
+                            f"carga={grafo.vertices[i].carga}, "
+                            f"tipo={grafo.vertices[i].tipo}): {distancia}")
+        else:
+            vertice_info = f"Nodo {i}: {distancia}"
+        print(vertice_info)
 
     print("\nCaminos mínimos desde el nodo de inicio:")
     for i, camino in enumerate(caminos):
-        print(f"Nodo {i}: {camino + [i]}")
+        camino_descripcion = [f"nodo {j} (masa={grafo.vertices[j].masa}, "
+                              f"carga={grafo.vertices[j].carga}, "
+                              f"tipo={grafo.vertices[j].tipo})" for j in camino + [i]]
+        print(f"Nodo {i}: " + " -> ".join(camino_descripcion))
+
+
 #TODO: Funcion para ejecutar dijkstra en todos los vertices necesarios
 
 
@@ -367,3 +395,15 @@ if __name__ == "__main__":
 ## cuando este en P2-Dalgo:
 #   python a compilar |  archivo in  |    archivo out
 #   python P2.py      |      P2.in   |      P2.out
+
+
+# QUE NOS FALTA
+# PROCEDIMIENTO:
+# 1. Hallar todos los posibles caminos eulerianos entre el grafo de los vertices fundamentales
+# 2. Para cada camino euleriano, hallar el costo total, para ello:
+#   2.1. Hallar el costo de cada conexion entre los vertices fundamentales, 
+    # esto significa que se debe hallar el camino minimo (dijkstra) entre cada par de vertices fundamentales
+    # Si es 3 con 3, se halla el camino minimo entre 3 con -3 y así sucesivamente
+#   2.2. Ir sumando los costos de las conexiones entre los vertices fundamentales
+# 3. Hallar el camino euleriano con menor costo
+# 4. Retornar el costo y el camino
