@@ -339,6 +339,41 @@ class Caso:
             costo_minimo = min(costo, costo_minimo)
         return camino_minimo, costo_minimo
             
+    #TODO: YO DIGO QUE ESTO HAY QUE BORRARLO XD
+    # ESTO TOCA CAMBIARLO XD, TAMBIEN QUEREMOS PARA ESTO LA MATRIZ DE ADYACENCIAS         
+    def dijkstra(self, vertice_source, vertice_destino):
+        # Dijkstra, retorna el camino mínimo y el costo mínimo
+        distancias = {vertice: sys.maxsize for vertice in self.grafo.vertices}
+        distancias[vertice_source] = 0
+        predecesores = {vertice: None for vertice in self.grafo.vertices}
+        visitados = set()
+        
+        while len(visitados) < len(self.grafo.vertices):
+            # Elegir el vértice no visitado con la distancia más corta
+            vertice_actual = min((v for v in self.grafo.vertices if v not in visitados), key=lambda x: distancias[x])
+            visitados.add(vertice_actual)
+            
+            # Considerar todas las conexiones desde el vértice actual
+            for conexion in self.grafo.conexiones:
+                if conexion.origen == vertice_actual:
+                    if distancias[conexion.destino] > distancias[vertice_actual] + conexion.costo:
+                        distancias[conexion.destino] = distancias[vertice_actual] + conexion.costo
+                        predecesores[conexion.destino] = vertice_actual
+                elif conexion.destino == vertice_actual:
+                    if distancias[conexion.origen] > distancias[vertice_actual] + conexion.costo:
+                        distancias[conexion.origen] = distancias[vertice_actual] + conexion.costo
+                        predecesores[conexion.origen] = vertice_actual
+
+        # Reconstruir el camino mínimo desde el vértice de destino al de origen
+        camino = []
+        step = vertice_destino
+        if predecesores[step] is not None or step == vertice_source:
+            while step is not None:
+                camino.append(step)
+                step = predecesores[step]
+            camino.reverse()  # Invertir para obtener el camino desde el origen al destino
+
+        return camino, distancias[vertice_destino]
     
     def escribir_camino_minimo(self, distancias, output_file):
         # Escribe el camino minimo en el archivo de salida
@@ -429,4 +464,4 @@ if __name__ == "__main__":
     # esto significa que se debe hallar el camino minimo (dijkstra) entre cada par de vertices fundamentales
     # Si es 3 con 3, se halla el camino minimo entre 3 con -3 y así sucesivamente
 #   2.2. Ir sumando los costos de las conexiones entre los vertices fundamentales
-# 4. Retornar el camino incluyendo los atomos libres, y retornar el costo
+# 3. Retornar el camino incluyendo los atomos libres, y retornar el costo
