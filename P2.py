@@ -1,3 +1,4 @@
+from queue import Queue
 import sys
 
 ## CLASES 
@@ -22,9 +23,7 @@ class Vertice:
         return f"Vertice(masa={self.masa}, carga={self.carga}), tipo={self.tipo}"
 
     def __eq__(self, other):
-        # Compara si otro objeto de 'Vertice' es igual a este.
         if not isinstance(other, Vertice) or (self.pareja is None and other.pareja is not None) or (self.pareja is not None and other.pareja is None):
-            # No es igual si 'other' no es una instancia de Vertice
             return False
         
         elif self.pareja is None and other.pareja is None:
@@ -35,7 +34,6 @@ class Vertice:
                 and self.pareja.masa == other.pareja.masa and self.pareja.carga == other.pareja.carga
 
     def __hash__(self):
-        # Devuelve un número único para cada objeto de 'Vertice'.
         return hash((self.masa, self.carga))
     
 class Conexion:
@@ -105,27 +103,81 @@ class Grafo:
 
         return self.matriz_ady, self.diccionario_indices
 
-    def determinar_si_se_puede(self) -> bool:
+    def determinar_si_se_puede_y_grafo_euleriano(self):
         conteo  = {}
-        impares = 0
+        grafo_euleriano = {}
+        #impares = 0
         for conexion in self.conexiones:
             origen = str(conexion.origen.masa) + str(conexion.origen.carga)
             destino = str(conexion.destino.masa)+ str(conexion.destino.carga)
+
             if  origen not in conteo.keys():
-                conteo[origen] = 0
-            elif origen in conteo.keys():
+                conteo[origen] = 1
+                grafo_euleriano[origen] = [destino]
+
+            else:
                 conteo[origen] +=1
-            
+                grafo_euleriano[origen].append(destino)
+
             if destino not in conteo.keys():
-                conteo[destino] = 0
-            elif destino in conteo.keys():
+                conteo[destino] = 1
+                grafo_euleriano[destino] = [origen]
+
+            else:
                 conteo[destino] +=1
-        for vertice in conteo:
-            if conteo[vertice]%2 != 0:
+                grafo_euleriano[destino].append(origen)
+
+        # Verificar si el grafo es euleriano revisando el número de vértices con grado impar
+        source = None
+        impares = 0
+        mayor_grado_impar = 0
+        for key, val in conteo.items():
+            if val % 2 != 0:
                 impares +=1
-        if impares > 2 or impares == 1:
-            return False
-        return True
+                if val > mayor_grado_impar:
+                    mayor_grado_impar = val
+                    source = key
+
+        # Tiene exactamente dos vértices de grado impar o ninguno
+        if impares > 2: 
+            return False, None, None # No es un grafo euleriano
+        return True, grafo_euleriano, source  # Es un grafo euleriano, retorna el grafo y el vértice inicial posible
+
+    def es_alcanzable_BFS(self, origen, destino, grafo_euleriano):
+        if len(grafo_euleriano[origen]) > 0:
+            visitados = set()
+            visitados.add(origen)
+            cola = Queue()
+            cola.put(origen)
+            while not cola.empty():
+                actual = cola.get()
+                if actual == destino:
+                    return True
+                for vecino in grafo_euleriano[actual]:
+                    if vecino not in visitados:
+                        visitados.add(vecino)
+                        cola.put(vecino)
+        else:
+            return True
+
+    def encontrar_camino_euleriano(self, inicio, numero_compuestos, grafo_euleriano):
+        camino = []
+        actual = inicio
+        for _ in range(numero_compuestos):
+            vecinos = grafo_euleriano[actual].copy()
+            for siguiente in vecinos:
+                # Intenta remover el enlace temporalmente
+                grafo_euleriano[actual].remove(siguiente)
+                grafo_euleriano[siguiente].remove(actual)
+                if self.es_alcanzable_BFS(actual,siguiente,grafo_euleriano):
+                    camino.append((actual,siguiente))
+                    actual = siguiente
+                    break
+                else: 
+                    # Restaura el enlace si no es posible avanzar
+                    grafo_euleriano[actual].append(siguiente)
+                    grafo_euleriano[siguiente].append(actual)   
+        return camino
 
     def dijkstra(self, nodo_inicio):
         distancias = [float('inf')] * len(self.vertices)
@@ -164,21 +216,27 @@ class Caso:
         self.lineas = lineas
         self.output_file = output_file
         
-        self.grafo, self.vertices_fundamentales = self.cargar_grafo(lineas)
-        ################################################################################# DETERMINA SI SE PUEDE HACER O NO :)
-        rpsta = self.grafo.determinar_si_se_puede()
+        self.grafo, self.vertices_fundamentales, self.num_compuestos_fund = self.cargar_grafo(lineas)
+        ################################################################################# DETERMINA SI SE PUEDE HACER O NO :) y halla el euleriano :)
+        rpsta, grafo_euleriano, source_eulerian = self.grafo.determinar_si_se_puede_y_grafo_euleriano()
+
         if rpsta == False:
             self.escribir_resultado("NO SE PUEDE", output_file)
         else:
+
+            camino_euleriano = self.grafo.encontrar_camino_euleriano(source_eulerian, self.num_compuestos_fund, grafo_euleriano)
+            print(f"El camino euleriano es {camino_euleriano}")
+
+            self.escribir_resultado(camino_euleriano, output_file)
             self.grafo, self.vertices_libres = self.grafo_vertices_libres(self.grafo)
-            
+                        
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
             
             ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
             self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
             
-            #TODO: HAY QUE CORREGIR LO DE LOS COSTOS DE LOS VERTICES LIBRES
+            #TODO: HAY QUE CORREGIR LO DE LOS COSTOS DE LOS VERTICES LIBRES, si ?
             distancias, caminos = self.grafo_completo.dijkstra(0)
             
             ## IMPRIME LA DISTANCIA DESE EL VERTICE 0 HASTA TODOS LOS NODOS, Y SUS RESPECTIVOS CAMINOS
@@ -218,7 +276,8 @@ class Caso:
             conexion = Conexion(origen, destino,costo)
             grafo.add_conexion(conexion)
             index += 1
-        return grafo, vertices_fundamentales
+        num_compuestos_fund = index
+        return grafo, vertices_fundamentales, num_compuestos_fund
 
     def grafo_vertices_libres(self, grafo): #crear un grafo conectado para hacerle dijkstra n veces
             original_vertices = set(grafo.vertices)
@@ -241,7 +300,7 @@ class Caso:
     
     def crear_grafo_completo(self, grafo):
         # Vamos a conectar todos los vertices fundamentales con cada vertice libre, pero no se pueden conectar vertices con la misma masa. 
-        #TODO: CORREGIR LO DE LOS COSTOS DE LOS ATOMOS LIBRES
+        #TODO: CORREGIR LO DE LOS COSTOS DE LOS ATOMOS LIBRES, si ?
         for vertice_fund in self.vertices_fundamentales:
             for vertice_libre in self.vertices_libres:
                 if vertice_fund.masa != vertice_libre.masa:
@@ -280,41 +339,6 @@ class Caso:
             costo_minimo = min(costo, costo_minimo)
         return camino_minimo, costo_minimo
             
-    #TODO: YO DIGO QUE ESTO HAY QUE BORRARLO XD
-    # ESTO TOCA CAMBIARLO XD, TAMBIEN QUEREMOS PARA ESTO LA MATRIZ DE ADYACENCIAS         
-    def dijkstra(self, vertice_source, vertice_destino):
-        # Dijkstra, retorna el camino mínimo y el costo mínimo
-        distancias = {vertice: sys.maxsize for vertice in self.grafo.vertices}
-        distancias[vertice_source] = 0
-        predecesores = {vertice: None for vertice in self.grafo.vertices}
-        visitados = set()
-        
-        while len(visitados) < len(self.grafo.vertices):
-            # Elegir el vértice no visitado con la distancia más corta
-            vertice_actual = min((v for v in self.grafo.vertices if v not in visitados), key=lambda x: distancias[x])
-            visitados.add(vertice_actual)
-            
-            # Considerar todas las conexiones desde el vértice actual
-            for conexion in self.grafo.conexiones:
-                if conexion.origen == vertice_actual:
-                    if distancias[conexion.destino] > distancias[vertice_actual] + conexion.costo:
-                        distancias[conexion.destino] = distancias[vertice_actual] + conexion.costo
-                        predecesores[conexion.destino] = vertice_actual
-                elif conexion.destino == vertice_actual:
-                    if distancias[conexion.origen] > distancias[vertice_actual] + conexion.costo:
-                        distancias[conexion.origen] = distancias[vertice_actual] + conexion.costo
-                        predecesores[conexion.origen] = vertice_actual
-
-        # Reconstruir el camino mínimo desde el vértice de destino al de origen
-        camino = []
-        step = vertice_destino
-        if predecesores[step] is not None or step == vertice_source:
-            while step is not None:
-                camino.append(step)
-                step = predecesores[step]
-            camino.reverse()  # Invertir para obtener el camino desde el origen al destino
-
-        return camino, distancias[vertice_destino]
     
     def escribir_camino_minimo(self, distancias, output_file):
         # Escribe el camino minimo en el archivo de salida
@@ -399,11 +423,10 @@ if __name__ == "__main__":
 
 # QUE NOS FALTA
 # PROCEDIMIENTO:
-# 1. Hallar todos los posibles caminos eulerianos entre el grafo de los vertices fundamentales
-# 2. Para cada camino euleriano, hallar el costo total, para ello:
+# 1. Hallar el camino euleriano
+# 2. Para el euleriano, hallar el costo total, para ello:
 #   2.1. Hallar el costo de cada conexion entre los vertices fundamentales, 
     # esto significa que se debe hallar el camino minimo (dijkstra) entre cada par de vertices fundamentales
     # Si es 3 con 3, se halla el camino minimo entre 3 con -3 y así sucesivamente
 #   2.2. Ir sumando los costos de las conexiones entre los vertices fundamentales
-# 3. Hallar el camino euleriano con menor costo
-# 4. Retornar el costo y el camino
+# 4. Retornar el camino incluyendo los atomos libres, y retornar el costo
