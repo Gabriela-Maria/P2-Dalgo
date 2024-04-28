@@ -243,10 +243,6 @@ class Caso:
             respuesta_dijkstra(self.grafo_completo, distancias, caminos)
                     
             self.escribir_resultado(self.grafo_completo, output_file)
-
-            camino_minimo, costo_minimo = self.camino_minimo_vertices_fundamentales()
-            print(f"El costo minimo es {costo_minimo}")
-            print(f"El camino minimo es {camino_minimo}")
             
     def calcular_costo(self, vertice1, vertice2):
         return (1 + abs(vertice1.masa-vertice2.masa) % self.w1) if (vertice1.carga == vertice2.carga) else (self.w2 - abs(vertice1.masa-vertice2.masa) % self.w2)
@@ -324,56 +320,6 @@ class Caso:
             
 
         return grafo
-    
-    def camino_minimo_vertices_fundamentales(self):
-        # Ahora vamos a hacer dijkstra para cada vertice fundamental y nos quedamos con el costo minimo
-        costo_minimo = sys.maxsize
-        for vertice_source in self.vertices_fundamentales:
-            vertice_destino = None 
-            for vertice_libre in self.vertices_libres:
-                if vertice_source.es_opuesto(vertice_libre):
-                    vertice_destino = vertice_libre
-                    break
-                
-            camino_minimo, costo = self.dijkstra(vertice_source, vertice_destino)
-            costo_minimo = min(costo, costo_minimo)
-        return camino_minimo, costo_minimo
-            
-    #TODO: YO DIGO QUE ESTO HAY QUE BORRARLO XD
-    # ESTO TOCA CAMBIARLO XD, TAMBIEN QUEREMOS PARA ESTO LA MATRIZ DE ADYACENCIAS         
-    def dijkstra(self, vertice_source, vertice_destino):
-        # Dijkstra, retorna el camino mínimo y el costo mínimo
-        distancias = {vertice: sys.maxsize for vertice in self.grafo.vertices}
-        distancias[vertice_source] = 0
-        predecesores = {vertice: None for vertice in self.grafo.vertices}
-        visitados = set()
-        
-        while len(visitados) < len(self.grafo.vertices):
-            # Elegir el vértice no visitado con la distancia más corta
-            vertice_actual = min((v for v in self.grafo.vertices if v not in visitados), key=lambda x: distancias[x])
-            visitados.add(vertice_actual)
-            
-            # Considerar todas las conexiones desde el vértice actual
-            for conexion in self.grafo.conexiones:
-                if conexion.origen == vertice_actual:
-                    if distancias[conexion.destino] > distancias[vertice_actual] + conexion.costo:
-                        distancias[conexion.destino] = distancias[vertice_actual] + conexion.costo
-                        predecesores[conexion.destino] = vertice_actual
-                elif conexion.destino == vertice_actual:
-                    if distancias[conexion.origen] > distancias[vertice_actual] + conexion.costo:
-                        distancias[conexion.origen] = distancias[vertice_actual] + conexion.costo
-                        predecesores[conexion.origen] = vertice_actual
-
-        # Reconstruir el camino mínimo desde el vértice de destino al de origen
-        camino = []
-        step = vertice_destino
-        if predecesores[step] is not None or step == vertice_source:
-            while step is not None:
-                camino.append(step)
-                step = predecesores[step]
-            camino.reverse()  # Invertir para obtener el camino desde el origen al destino
-
-        return camino, distancias[vertice_destino]
     
     def escribir_camino_minimo(self, distancias, output_file):
         # Escribe el camino minimo en el archivo de salida
