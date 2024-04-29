@@ -1,6 +1,7 @@
 from queue import Queue
 import sys
 import time
+import heapq
 
 ## CLASES 
 
@@ -68,20 +69,18 @@ class Grafo:
     
 
     def crear_matriz_ady(self):
-        self.matriz_ady = [[0] * len(self.vertices) for _ in range(len(self.vertices))]
-        count = 0
-        for vertice_f in self.vertices:
-            self.diccionario_indices[vertice_f] = count
-            count +=1
+        n = len(self.vertices)
+        self.matriz_ady = [[0] * n for _ in range(n)]
+        self.diccionario_indices = {vertice: index for index, vertice in enumerate(self.vertices)}
+
         for conexion in self.conexiones:
-            for indice in self.diccionario_indices.keys():
-                v1 = self.diccionario_indices[conexion.origen]
-                v2 = self.diccionario_indices[conexion.destino]
-                if conexion.origen == indice and self.matriz_ady[v1][v2] == 0:
-                    self.matriz_ady[v1][v2] = conexion.costo 
-                if conexion.destino == indice and self.matriz_ady[v2][v1] == 0:
-                    self.matriz_ady[v2][v1] = conexion.costo 
-        #print (self.diccionario_indices)        
+            v1 = self.diccionario_indices[conexion.origen]
+            v2 = self.diccionario_indices[conexion.destino]
+
+            if self.matriz_ady[v1][v2] == 0:  # Check if there is no pre-existing weight (or it's zero)
+                self.matriz_ady[v1][v2] = conexion.costo
+            if self.matriz_ady[v2][v1] == 0:  # This check depends on if the graph is directed or not
+                self.matriz_ady[v2][v1] = conexion.costo
 
         return self.matriz_ady, self.diccionario_indices
 
@@ -158,31 +157,36 @@ class Grafo:
                     grafo_euleriano[siguiente].append(actual)   
         return camino
 
-    def dijkstra(self, nodo_inicio,nodo_destino):
+
+    def dijkstra(self, nodo_inicio, nodo_destino):
         distancias = [float('inf')] * len(self.vertices)
         distancias[nodo_inicio] = 0
         visitados = [False] * len(self.vertices)
-        caminos = [[] for _ in range(len(self.vertices))] 
+        caminos = [[] for _ in range(len(self.vertices))]
         
-        for _ in range(len(self.vertices)):
-            min_distancia = float('inf')
-            min_vertice = -1
-            for v in range(len(self.vertices)):
-                if not visitados[v] and distancias[v] < min_distancia:
-                    min_distancia = distancias[v]
-                    min_vertice = v
+        # Usamos un heap donde cada elemento es una tupla (distancia, vertice)
+        heap = []
+        heapq.heappush(heap, (0, nodo_inicio))
+        
+        while heap:
+            min_distancia, min_vertice = heapq.heappop(heap)
             visitados[min_vertice] = True
-            if min_vertice == nodo_destino:
-             break
             
+            if min_vertice == nodo_destino:
+                break
+            
+            # Actualizar las distancias de los vértices adyacentes
             for v in range(len(self.vertices)):
-                if (not visitados[v]) and (self.matriz_ady[min_vertice][v] != 0):
-                    nueva_distancia = distancias[min_vertice] + self.matriz_ady[min_vertice][v]
+                if not visitados[v] and self.matriz_ady[min_vertice][v] != 0:
+                    nueva_distancia = min_distancia + self.matriz_ady[min_vertice][v]
                     if nueva_distancia < distancias[v]:
                         distancias[v] = nueva_distancia
                         caminos[v] = caminos[min_vertice] + [min_vertice]
+                        # Añadir al heap para próximas evaluaciones
+                        heapq.heappush(heap, (nueva_distancia, v))
+
         return distancias, caminos
-    
+     
     def vertices_fundamentales_repetidos(self):
         cuenta_masa_carga = {}
         vertices_unicos = {}
@@ -236,8 +240,6 @@ class Grafo:
 
         return resultados_dijkstra, costo_final
 
-
-    
     def generar_camino_conectado(self, camino_euleriano, dijkstra_paths):
         # Crear un mapa para asociar cada tupla con el camino correspondiente
         camino_mapa = {}
