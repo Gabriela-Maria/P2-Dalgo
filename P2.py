@@ -77,9 +77,9 @@ class Grafo:
             v1 = self.diccionario_indices[conexion.origen]
             v2 = self.diccionario_indices[conexion.destino]
 
-            if self.matriz_ady[v1][v2] == 0:  # Check if there is no pre-existing weight (or it's zero)
+            if self.matriz_ady[v1][v2] == 0: 
                 self.matriz_ady[v1][v2] = conexion.costo
-            if self.matriz_ady[v2][v1] == 0:  # This check depends on if the graph is directed or not
+            if self.matriz_ady[v2][v1] == 0:  
                 self.matriz_ady[v2][v1] = conexion.costo
 
         return self.matriz_ady, self.diccionario_indices
@@ -107,7 +107,6 @@ class Grafo:
                 conteo[destino] +=1
                 grafo_euleriano[destino].append(origen)
 
-        # Verificar si el grafo es euleriano revisando el número de vértices con grado impar
         source = None
         impares = 0
         mayor_grado_impar = 0
@@ -118,10 +117,9 @@ class Grafo:
                     mayor_grado_impar = val
                     source = key
 
-        # Tiene exactamente dos vértices de grado impar o ninguno
         if impares > 2: 
-            return False, None, None # No es un grafo euleriano
-        return True, grafo_euleriano, source  # Es un grafo euleriano, retorna el grafo y el vértice inicial posible
+            return False, None, None 
+        return True, grafo_euleriano, source  
 
     def es_alcanzable_BFS(self, origen, destino, grafo_euleriano):
         if len(grafo_euleriano[origen]) > 0:
@@ -140,10 +138,10 @@ class Grafo:
         else:
             return True
 
-    def encontrar_camino_euleriano(self, inicio, numero_compuestos, grafo_euleriano):
+    def encontrar_camino_euleriano(self, inicio, numero_elementos, grafo_euleriano):
         camino = []
         actual = inicio
-        for _ in range(numero_compuestos):
+        for _ in range(numero_elementos):
             vecinos = grafo_euleriano[actual].copy()
             for siguiente in vecinos:
                 grafo_euleriano[actual].remove(siguiente)
@@ -164,7 +162,6 @@ class Grafo:
         visitados = [False] * len(self.vertices)
         caminos = [[] for _ in range(len(self.vertices))]
         
-        # Usamos un heap donde cada elemento es una tupla (distancia, vertice)
         heap = []
         heapq.heappush(heap, (0, nodo_inicio))
         
@@ -175,14 +172,12 @@ class Grafo:
             if min_vertice == nodo_destino:
                 break
             
-            # Actualizar las distancias de los vértices adyacentes
             for v in range(len(self.vertices)):
                 if not visitados[v] and self.matriz_ady[min_vertice][v] != 0:
                     nueva_distancia = min_distancia + self.matriz_ady[min_vertice][v]
                     if nueva_distancia < distancias[v]:
                         distancias[v] = nueva_distancia
                         caminos[v] = caminos[min_vertice] + [min_vertice]
-                        # Añadir al heap para próximas evaluaciones
                         heapq.heappush(heap, (nueva_distancia, v))
 
         return distancias, caminos
@@ -282,11 +277,8 @@ class Grafo:
             resultado.append(elemento_fundamental)
 
             if camino_intermedio is not None:
-                # Añadir elementos intermedios formateados fuera de paréntesis
                 intermedios = ",".join([formato_vertice(v) for v in camino_intermedio])
                 resultado.append(intermedios)
-
-        # Unir todo el resultado con comas y agregar el costo total al final
         resultado_final = ",".join(resultado) + f" {costo_total}"
         return resultado_final
 
@@ -306,14 +298,14 @@ class Caso:
         self.lineas = lineas
         self.output_file = output_file
         
-        self.grafo, self.vertices_fundamentales, self.num_compuestos_fund = self.cargar_grafo(lineas) #1
+        self.grafo, self.vertices_fundamentales, self.num_elementos_fund = self.cargar_grafo(lineas) #1
         rpsta, grafo_euleriano, source_eulerian = self.grafo.determinar_si_se_puede_y_grafo_euleriano() #2
 
         if rpsta == False:
             self.escribir_resultado("NO SE PUEDE", output_file)
         else:
 
-            camino_euleriano = self.grafo.encontrar_camino_euleriano(source_eulerian, self.num_compuestos_fund, grafo_euleriano)
+            camino_euleriano = self.grafo.encontrar_camino_euleriano(source_eulerian, self.num_elementos_fund, grafo_euleriano)
             print(f"El camino euleriano es {camino_euleriano}")
 
             #self.escribir_resultado(camino_euleriano, output_file)
@@ -378,10 +370,10 @@ class Caso:
             conexion = Conexion(origen, destino,costo)
             grafo.add_conexion(conexion)
             index += 1
-        num_compuestos_fund = index
-        return grafo, vertices_fundamentales, num_compuestos_fund
+        num_elementos_fund = index
+        return grafo, vertices_fundamentales, num_elementos_fund
 
-    def grafo_vertices_libres(self, grafo): #crear un grafo conectado para hacerle dijkstra n veces
+    def grafo_vertices_libres(self, grafo):
             original_vertices = set(grafo.vertices)
             vertices_libres = []
             for vertice in original_vertices:
@@ -401,30 +393,40 @@ class Caso:
     
     
     def crear_grafo_completo(self, grafo):
-        # Vamos a conectar todos los vertices fundamentales con cada vertice libre, pero no se pueden conectar vertices con la misma masa. 
-        for vertice_fund in self.vertices_fundamentales:
-            for vertice_libre in self.vertices_libres:
-                if vertice_fund.masa != vertice_libre.masa:
-                    costo = self.calcular_costo(vertice_fund, vertice_libre)
-                    conexion_f_l = Conexion(vertice_fund, vertice_libre, costo)
-                    if not any(conex.origen == vertice_fund and conex.destino == vertice_libre for conex in grafo.conexiones):
-                        conexion_f_l = Conexion(vertice_fund, vertice_libre, costo)
-                        grafo.add_conexion(conexion_f_l)
+        vertices_por_masa = {}
+        for vertice in self.vertices_fundamentales + self.vertices_libres:
+            if vertice.masa not in vertices_por_masa:
+                vertices_por_masa[vertice.masa] = []
+            vertices_por_masa[vertice.masa].append(vertice)
 
-        for i in range(len(self.vertices_libres)):
-            for j in range(i + 1, len(self.vertices_libres)):
-                vertice_libre1 = self.vertices_libres[i]
-                vertice_libre2 = self.vertices_libres[j]
-                if vertice_libre1.masa != vertice_libre2.masa:  
-                    costo = self.calcular_costo(vertice_libre1, vertice_libre2)
-                    conexion_l_l = Conexion(vertice_libre1, vertice_libre2, costo)
-                    if not any(conex.origen == vertice_libre1 and conex.destino == vertice_libre2 for conex in grafo.conexiones):
-                        grafo.add_conexion(conexion_l_l)
-                        conexion_l_l_inversa = Conexion(vertice_libre2, vertice_libre1, costo)
-                        grafo.add_conexion(conexion_l_l_inversa)                    
-            
+        conexiones_existentes = set((conexion.origen, conexion.destino) for conexion in grafo.conexiones)
+        conexiones_existentes.update((conexion.destino, conexion.origen) for conexion in grafo.conexiones)
+
+        for v_fund in self.vertices_fundamentales:
+            for masa, vertices in vertices_por_masa.items():
+                if masa != v_fund.masa:
+                    for v_libre in vertices:
+                        if (v_fund, v_libre) not in conexiones_existentes:
+                            costo = self.calcular_costo(v_fund, v_libre)
+                            conexion = Conexion(v_fund, v_libre, costo)
+                            grafo.add_conexion(conexion)
+                            conexiones_existentes.add((v_fund, v_libre))
+                            conexiones_existentes.add((v_libre, v_fund))
+
+        for masa, vertices in vertices_por_masa.items():
+            for i in range(len(vertices)):
+                for j in range(i + 1, len(vertices)):
+                    if vertices[i].masa != vertices[j].masa:
+                        if (vertices[i], vertices[j]) not in conexiones_existentes:
+                            costo = self.calcular_costo(vertices[i], vertices[j])
+                            conexion = Conexion(vertices[i], vertices[j], costo)
+                            grafo.add_conexion(conexion)
+                            conexiones_existentes.add((vertices[i], vertices[j]))
+                            conexiones_existentes.add((vertices[j], vertices[i]))
 
         return grafo
+
+
     
     def escribir_camino_minimo(self, distancias, output_file):
         # Escribe el camino minimo en el archivo de salida
