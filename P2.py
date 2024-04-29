@@ -89,8 +89,8 @@ class Grafo:
         conteo  = {}
         grafo_euleriano = {}
         for conexion in self.conexiones:
-            origen = str(conexion.origen.masa) + str(conexion.origen.carga)
-            destino = str(conexion.destino.masa)+ str(conexion.destino.carga)
+            origen = str(conexion.origen.carga) + str(conexion.origen.masa)
+            destino = str(conexion.destino.carga)+ str(conexion.destino.masa)
 
             if  origen not in conteo.keys():
                 conteo[origen] = 1
@@ -228,10 +228,10 @@ class Grafo:
                 costo_final+= distancias[nodo_destino]
 
                 camino = caminos[nodo_destino]
-                camino_formateado = [f"{self.vertices[n].masa}{self.vertices[n].carga}" for n in camino] + [f"{vertice_opuesto.masa}{vertice_opuesto.carga}"]
+                camino_formateado = [f"{self.vertices[n].carga}{self.vertices[n].masa}" for n in camino] + [f"{vertice_opuesto.carga}{vertice_opuesto.masa}"]
 
                 camino_formateado = camino_formateado[1:]  # Elimina el elemento fundamental
-                clave = f"{vertice.masa}{vertice.carga}"
+                clave = f"{vertice.carga}{vertice.masa}"
                 resultados_dijkstra[clave] = camino_formateado
 
         return resultados_dijkstra, costo_final
@@ -304,9 +304,8 @@ class Caso:
         self.lineas = lineas
         self.output_file = output_file
         
-        self.grafo, self.vertices_fundamentales, self.num_compuestos_fund = self.cargar_grafo(lineas)
-        ################################################################################# DETERMINA SI SE PUEDE HACER O NO :) y halla el euleriano :)
-        rpsta, grafo_euleriano, source_eulerian = self.grafo.determinar_si_se_puede_y_grafo_euleriano()
+        self.grafo, self.vertices_fundamentales, self.num_compuestos_fund = self.cargar_grafo(lineas) #1
+        rpsta, grafo_euleriano, source_eulerian = self.grafo.determinar_si_se_puede_y_grafo_euleriano() #2
 
         if rpsta == False:
             self.escribir_resultado("NO SE PUEDE", output_file)
