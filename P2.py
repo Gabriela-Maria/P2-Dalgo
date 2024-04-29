@@ -206,12 +206,13 @@ class Grafo:
 
         return vertices_repetidos
 
-    def encontrar_opuesto_libre(self, vertice_o_l):
-        carga_opuesta = "-" if vertice_o_l.carga == "+" else "+"
-        for vertice_o_l in self.vertices:
-            if vertice_o_l.masa == vertice_o_l.masa and vertice_o_l.carga == carga_opuesta and vertice_o_l.tipo == "libre":
-                return vertice_o_l
+    def encontrar_opuesto_libre(self, vertice):
+        carga_opuesta = "-" if vertice.carga == "+" else "+"
+        for candidato in self.vertices:
+            if candidato.masa == vertice.masa and candidato.carga == carga_opuesta and candidato.tipo == "libre":
+                return candidato
         return None
+
     
     def dijkstra_para_fundamentales_repetidos(self):
         vertices_repetidos = self.vertices_fundamentales_repetidos()
@@ -226,35 +227,42 @@ class Grafo:
                 distancias, caminos = self.dijkstra(nodo_inicio)
 
                 camino = caminos[nodo_destino]
-                camino_formateado = [self.vertices[n].__repr__() for n in camino] + [vertice_opuesto.__repr__()]
-                resultados_dijkstra[vertice.__repr__()] = camino_formateado
+                camino_formateado = [f"{self.vertices[n].masa}{self.vertices[n].carga}" for n in camino] + [f"{vertice_opuesto.masa}{vertice_opuesto.carga}"]
+
+                camino_formateado = camino_formateado[1:]  # Elimina el elemento fundamental
+                clave = f"{vertice.masa}{vertice.carga}"
+                resultados_dijkstra[clave] = camino_formateado
 
         return resultados_dijkstra
+
+
     
     def generar_camino_conectado(self, camino_euleriano, dijkstra_paths):
-        # Se asume que camino_euleriano y dijkstra_paths ya están definidos y pasados como argumentos
-        vertices_repetidos = set(dijkstra_paths.keys())  # Conjunto de vértices repetidos fundamentales
+        # Crear un mapa para asociar cada tupla con el camino correspondiente
+        camino_mapa = {}
 
-        # Crear el camino final
-        camino_final = []
-        for segmento in camino_euleriano:
-            vertice_inicio = segmento[0]
-            vertice_final = segmento[1]
+        
+        for i in range(len(camino_euleriano) - 1):
+            ele_fund = camino_euleriano[i]
+            vertice_inicio = ele_fund[0]
+            vertice_final = ele_fund[1]
 
-            # Agregar siempre el vértice inicial del segmento
-            camino_final.append(vertice_inicio)
+            # Generar clave para el diccionario
+            clave_segmento = (vertice_inicio, vertice_final)
 
-            # Si el vértice inicial es un vértice fundamental repetido, agregar su camino Dijkstra
-            if vertice_inicio in vertices_repetidos:
-                camino_con_dijkstra = dijkstra_paths[vertice_inicio]
-                camino_final.extend(camino_con_dijkstra[:-1])  # Excluye el último para evitar duplicidad
+            # Si el vértice final es un vértice fundamental repetido, vincularlo con su camino de Dijkstra
+            if vertice_final in dijkstra_paths:
+                camino_con_dijkstra = dijkstra_paths[vertice_final]
+                # Añadir el camino desde este vértice hasta su opuesto libre, excluyendo el último vértice
+                camino_mapa[clave_segmento] = camino_con_dijkstra
+                print(camino_mapa[clave_segmento],"aaaaaaaaaaaaaa")
 
-            # Agregar el vértice final del segmento
-            camino_final.append(vertice_final)
+        # Tratar el último segmento por separado para asignarle None
+        ultimo_segmento = camino_euleriano[-1]
+        clave_ultimo_segmento = (ultimo_segmento[0], ultimo_segmento[1])
+        camino_mapa[clave_ultimo_segmento] = None
 
-        return camino_final
-
-
+        return camino_mapa
 
     
     def __repr__(self):
@@ -288,6 +296,7 @@ class Caso:
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
             caminos_fundamentales = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
+            print(caminos_fundamentales,"lols")
             camino_final = self.grafo_completo.generar_camino_conectado(camino_euleriano, caminos_fundamentales)
             
             ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
