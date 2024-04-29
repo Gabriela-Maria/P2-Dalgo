@@ -87,7 +87,6 @@ class Grafo:
     def determinar_si_se_puede_y_grafo_euleriano(self):
         conteo  = {}
         grafo_euleriano = {}
-        #impares = 0
         for conexion in self.conexiones:
             origen = str(conexion.origen.masa) + str(conexion.origen.carga)
             destino = str(conexion.destino.masa)+ str(conexion.destino.carga)
@@ -147,7 +146,6 @@ class Grafo:
         for _ in range(numero_compuestos):
             vecinos = grafo_euleriano[actual].copy()
             for siguiente in vecinos:
-                # Intenta remover el enlace temporalmente
                 grafo_euleriano[actual].remove(siguiente)
                 grafo_euleriano[siguiente].remove(actual)
                 if self.es_alcanzable_BFS(actual,siguiente,grafo_euleriano):
@@ -155,12 +153,11 @@ class Grafo:
                     actual = siguiente
                     break
                 else: 
-                    # Restaura el enlace si no es posible avanzar
                     grafo_euleriano[actual].append(siguiente)
                     grafo_euleriano[siguiente].append(actual)   
         return camino
 
-    def dijkstra(self, nodo_inicio):
+    def dijkstra(self, nodo_inicio,nodo_destino):
         distancias = [float('inf')] * len(self.vertices)
         distancias[nodo_inicio] = 0
         visitados = [False] * len(self.vertices)
@@ -174,6 +171,8 @@ class Grafo:
                     min_distancia = distancias[v]
                     min_vertice = v
             visitados[min_vertice] = True
+            if min_vertice == nodo_destino:
+             break
             
             for v in range(len(self.vertices)):
                 if (not visitados[v]) and (self.matriz_ady[min_vertice][v] != 0):
@@ -188,11 +187,10 @@ class Grafo:
         vertices_unicos = {}
 
         for vertice in self.vertices:
-            if vertice.tipo == "fundamental":  # Solo consideramos vértices fundamentales
+            if vertice.tipo == "fundamental": 
                 clave = (vertice.masa, vertice.carga)
                 if clave in cuenta_masa_carga:
                     cuenta_masa_carga[clave] += 1
-                    # Solo almacenamos una instancia del vértice para cada clave única
                     if clave not in vertices_unicos:
                         vertices_unicos[clave] = vertice
                 else:
@@ -201,7 +199,7 @@ class Grafo:
 
         vertices_repetidos = []
         for clave, cantidad in cuenta_masa_carga.items():
-            if cantidad > 1:  # Solo consideramos claves donde la cantidad es mayor a uno
+            if cantidad > 1:  
                 vertices_repetidos.append(vertices_unicos[clave])
 
         return vertices_repetidos
@@ -217,6 +215,7 @@ class Grafo:
     def dijkstra_para_fundamentales_repetidos(self):
         vertices_repetidos = self.vertices_fundamentales_repetidos()
         resultados_dijkstra = {}
+        costo_final = 0
 
         for vertice in vertices_repetidos:
             nodo_inicio = self.diccionario_indices[vertice]
@@ -224,7 +223,8 @@ class Grafo:
 
             if vertice_opuesto is not None:
                 nodo_destino = self.diccionario_indices[vertice_opuesto]
-                distancias, caminos = self.dijkstra(nodo_inicio)
+                distancias, caminos = self.dijkstra(nodo_inicio, nodo_destino)
+                costo_final+= distancias[nodo_destino]
 
                 camino = caminos[nodo_destino]
                 camino_formateado = [f"{self.vertices[n].masa}{self.vertices[n].carga}" for n in camino] + [f"{vertice_opuesto.masa}{vertice_opuesto.carga}"]
@@ -233,7 +233,7 @@ class Grafo:
                 clave = f"{vertice.masa}{vertice.carga}"
                 resultados_dijkstra[clave] = camino_formateado
 
-        return resultados_dijkstra
+        return resultados_dijkstra, costo_final
 
 
     
@@ -247,15 +247,12 @@ class Grafo:
             vertice_inicio = ele_fund[0]
             vertice_final = ele_fund[1]
 
-            # Generar clave para el diccionario
-            clave_segmento = (vertice_inicio, vertice_final)
+            tupla_segmento = (vertice_inicio, vertice_final)
 
-            # Si el vértice final es un vértice fundamental repetido, vincularlo con su camino de Dijkstra
             if vertice_final in dijkstra_paths:
                 camino_con_dijkstra = dijkstra_paths[vertice_final]
-                # Añadir el camino desde este vértice hasta su opuesto libre, excluyendo el último vértice
-                camino_mapa[clave_segmento] = camino_con_dijkstra
-                print(camino_mapa[clave_segmento],"aaaaaaaaaaaaaa")
+                camino_mapa[tupla_segmento] = camino_con_dijkstra
+                #print(camino_mapa[tupla_segmento],"aaaaaaaaaaaaaa")
 
         # Tratar el último segmento por separado para asignarle None
         ultimo_segmento = camino_euleriano[-1]
@@ -263,6 +260,33 @@ class Grafo:
         camino_mapa[clave_ultimo_segmento] = None
 
         return camino_mapa
+
+    def formatear_camino_final(self, camino_mapa, costo_total):
+        resultado = []
+
+        def formato_vertice(vertice_str):
+            # El vertice_str será una cadena como '+6' o '-3'
+            # Devuelve la cadena con el signo correcto basado en el primer carácter
+            if vertice_str[0] == '+':
+                return vertice_str[1:]  # Omite el signo más
+            return vertice_str  # Retorna como está para el signo menos
+
+        for (vertice_inicio, vertice_final), camino_intermedio in camino_mapa.items():
+            # Formatear cada vértice fundamental con signo adecuado
+            inicio_formato = formato_vertice(vertice_inicio)
+            final_formato = formato_vertice(vertice_final)
+            elemento_fundamental = f"({inicio_formato},{final_formato})"
+            resultado.append(elemento_fundamental)
+
+            if camino_intermedio is not None:
+                # Añadir elementos intermedios formateados fuera de paréntesis
+                intermedios = ",".join([formato_vertice(v) for v in camino_intermedio])
+                resultado.append(intermedios)
+
+        # Unir todo el resultado con comas y agregar el costo total al final
+        resultado_final = ",".join(resultado) + f" {costo_total}"
+        return resultado_final
+
 
     
     def __repr__(self):
@@ -290,15 +314,17 @@ class Caso:
             camino_euleriano = self.grafo.encontrar_camino_euleriano(source_eulerian, self.num_compuestos_fund, grafo_euleriano)
             print(f"El camino euleriano es {camino_euleriano}")
 
-            self.escribir_resultado(camino_euleriano, output_file)
+            #self.escribir_resultado(camino_euleriano, output_file)
             self.grafo, self.vertices_libres = self.grafo_vertices_libres(self.grafo)
                         
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
-            caminos_fundamentales = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
-            print(caminos_fundamentales,"lols")
+            caminos_fundamentales, costo = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
+           # print(caminos_fundamentales,"aaaaaaaaaaaa")
+            print(costo, "eeeeeeeee")
             camino_final = self.grafo_completo.generar_camino_conectado(camino_euleriano, caminos_fundamentales)
-            
+            resultado_final = self.grafo_completo.formatear_camino_final( camino_final, costo)
+            self.escribir_resultado(resultado_final, output_file)
             ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
            ## self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
             ##print("Vertices fundamentales repetidos:", self.vertices_iterables)
@@ -320,7 +346,7 @@ class Caso:
             ## IMPRIME LA DISTANCIA DESE EL VERTICE 0 HASTA TODOS LOS NODOS, Y SUS RESPECTIVOS CAMINOS
             #respuesta_dijkstra(self.grafo_completo, distancias, caminos)
                     
-            self.escribir_resultado(self.grafo_completo, output_file)
+           # self.escribir_resultado(self.grafo_completo, output_file)
             
     def calcular_costo(self, vertice1, vertice2):
         return (1 + abs(vertice1.masa-vertice2.masa) % self.w1) if (vertice1.carga == vertice2.carga) else (self.w2 - abs(vertice1.masa-vertice2.masa) % self.w2)
