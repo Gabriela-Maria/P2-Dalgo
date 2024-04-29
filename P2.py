@@ -64,26 +64,7 @@ class Grafo:
 
     def add_vertice(self,vertice):
         self.vertices.append(vertice)          
-
-    def vertices_fundamentales_repetidos(self):
-        self.cuenta_vertices_fundamentales_dic ={}
-        self.verticesf={}
-        for vertice in self.vertices:
-            entrada = str(vertice.masa) + str(vertice.carga)
-            if entrada in self.cuenta_vertices_fundamentales_dic:
-                self.cuenta_vertices_fundamentales_dic[entrada] += 1
-                self.verticesf[entrada].append(vertice)
-            elif entrada not in self.cuenta_vertices_fundamentales_dic.keys() and vertice.tipo == "fundamental":
-                self.cuenta_vertices_fundamentales_dic[entrada] = 1
-                self.verticesf[entrada]= [vertice]
-        self.entradas_repetidas = []
-        self.verticesf_repetidos = []
-        for verticef in self.cuenta_vertices_fundamentales_dic.keys():
-            if self.cuenta_vertices_fundamentales_dic[verticef] >= 2:
-                self.entradas_repetidas.append(verticef)
-        for verticef in self.entradas_repetidas:
-            self.verticesf_repetidos.append(self.verticesf[verticef])
-        return self.verticesf_repetidos
+    
 
     def crear_matriz_ady(self):
         self.matriz_ady = [[0] * len(self.vertices) for _ in range(len(self.vertices))]
@@ -201,7 +182,81 @@ class Grafo:
                         distancias[v] = nueva_distancia
                         caminos[v] = caminos[min_vertice] + [min_vertice]
         return distancias, caminos
+    
+    def vertices_fundamentales_repetidos(self):
+        cuenta_masa_carga = {}
+        vertices_unicos = {}
 
+        for vertice in self.vertices:
+            if vertice.tipo == "fundamental":  # Solo consideramos vértices fundamentales
+                clave = (vertice.masa, vertice.carga)
+                if clave in cuenta_masa_carga:
+                    cuenta_masa_carga[clave] += 1
+                    # Solo almacenamos una instancia del vértice para cada clave única
+                    if clave not in vertices_unicos:
+                        vertices_unicos[clave] = vertice
+                else:
+                    cuenta_masa_carga[clave] = 1
+                    vertices_unicos[clave] = vertice
+
+        vertices_repetidos = []
+        for clave, cantidad in cuenta_masa_carga.items():
+            if cantidad > 1:  # Solo consideramos claves donde la cantidad es mayor a uno
+                vertices_repetidos.append(vertices_unicos[clave])
+
+        return vertices_repetidos
+
+    def encontrar_opuesto_libre(self, vertice_o_l):
+        carga_opuesta = "-" if vertice_o_l.carga == "+" else "+"
+        for vertice_o_l in self.vertices:
+            if vertice_o_l.masa == vertice_o_l.masa and vertice_o_l.carga == carga_opuesta and vertice_o_l.tipo == "libre":
+                return vertice_o_l
+        return None
+    
+    def dijkstra_para_fundamentales_repetidos(self):
+        vertices_repetidos = self.vertices_fundamentales_repetidos()
+        resultados_dijkstra = {}
+
+        for vertice in vertices_repetidos:
+            nodo_inicio = self.diccionario_indices[vertice]
+            vertice_opuesto = self.encontrar_opuesto_libre(vertice)
+
+            if vertice_opuesto is not None:
+                nodo_destino = self.diccionario_indices[vertice_opuesto]
+                distancias, caminos = self.dijkstra(nodo_inicio)
+
+                camino = caminos[nodo_destino]
+                camino_formateado = [self.vertices[n].__repr__() for n in camino] + [vertice_opuesto.__repr__()]
+                resultados_dijkstra[vertice.__repr__()] = camino_formateado
+
+        return resultados_dijkstra
+    
+    def generar_camino_conectado(self, camino_euleriano, dijkstra_paths):
+        # Se asume que camino_euleriano y dijkstra_paths ya están definidos y pasados como argumentos
+        vertices_repetidos = set(dijkstra_paths.keys())  # Conjunto de vértices repetidos fundamentales
+
+        # Crear el camino final
+        camino_final = []
+        for segmento in camino_euleriano:
+            vertice_inicio = segmento[0]
+            vertice_final = segmento[1]
+
+            # Agregar siempre el vértice inicial del segmento
+            camino_final.append(vertice_inicio)
+
+            # Si el vértice inicial es un vértice fundamental repetido, agregar su camino Dijkstra
+            if vertice_inicio in vertices_repetidos:
+                camino_con_dijkstra = dijkstra_paths[vertice_inicio]
+                camino_final.extend(camino_con_dijkstra[:-1])  # Excluye el último para evitar duplicidad
+
+            # Agregar el vértice final del segmento
+            camino_final.append(vertice_final)
+
+        return camino_final
+
+
+
+    
     def __repr__(self):
         return f"Vertices: \n" + "\n".join([str(vertice) for vertice in self.vertices]) + "\n" \
                 + "Conexiones: \n" + "\n".join([str(conexion) for conexion in self.conexiones]) + "\n"
@@ -232,15 +287,28 @@ class Caso:
                         
             self.grafo_completo = self.crear_grafo_completo(self.grafo)
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
-            
+            caminos_fundamentales = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
+            camino_final = self.grafo_completo.generar_camino_conectado(camino_euleriano, caminos_fundamentales)
             ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
-            self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
+           ## self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
+            ##print("Vertices fundamentales repetidos:", self.vertices_iterables)
+
+            # Asumiendo que el método está implementado en la clase Grafo
             
+            # Imprimir el camino final en la consola o en el archivo de salida
+            print(f"Camino final para el caso {self.case_id}: {camino_final}")
+            
+            # Ejecutar y obtener los caminos de Dijkstra para vértices fundamentales repetidos
+            ##caminos_fundamentales = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
+            ##print("Caminos de Dijkstra para vértices fundamentales repetidos:")
+            ##for inicio, camino in caminos_fundamentales.items():
+              ##  print(f"Desde {inicio} hacia su opuesto libre: {camino}")
+
             #TODO: HAY QUE CORREGIR LO DE LOS COSTOS DE LOS VERTICES LIBRES, si ?
-            distancias, caminos = self.grafo_completo.dijkstra(0)
+            #distancias, caminos = self.grafo_completo.dijkstra(1)
             
             ## IMPRIME LA DISTANCIA DESE EL VERTICE 0 HASTA TODOS LOS NODOS, Y SUS RESPECTIVOS CAMINOS
-            respuesta_dijkstra(self.grafo_completo, distancias, caminos)
+            #respuesta_dijkstra(self.grafo_completo, distancias, caminos)
                     
             self.escribir_resultado(self.grafo_completo, output_file)
             
