@@ -401,7 +401,6 @@ class Caso:
     
     def crear_grafo_completo(self, grafo):
         # Vamos a conectar todos los vertices fundamentales con cada vertice libre, pero no se pueden conectar vertices con la misma masa. 
-        #TODO: CORREGIR LO DE LOS COSTOS DE LOS ATOMOS LIBRES, si ?
         for vertice_fund in self.vertices_fundamentales:
             for vertice_libre in self.vertices_libres:
                 if vertice_fund.masa != vertice_libre.masa:
@@ -508,7 +507,7 @@ if __name__ == "__main__":
     print(f"Total execution time: {execution_time:.2f} seconds")  # Print the execution time
 
 
-    
+
 ##para probarlo hacerlo desde la terminal
 ## cuando este en P2-Dalgo:
 #   python a compilar |  archivo in  |    archivo out
