@@ -1,5 +1,6 @@
 from queue import Queue
 import sys
+import time
 
 ## CLASES 
 
@@ -489,6 +490,9 @@ def resolver_casos( input_file, output_file):
 
         
 if __name__ == "__main__":
+    start_time = time.time()  # Start timing
+
+
     if len(sys.argv) != 3:
         print("Entradas esperadas: python script.py archivo_entrada.in archivo_salida.out\nIntente otravez")
         sys.exit(1)
@@ -499,19 +503,13 @@ if __name__ == "__main__":
     
     #hay que cambiar esto por el resultado q queramos
     resolver_casos(input_file, output_file)
+    end_time = time.time()  # End timing
+    execution_time = end_time - start_time  # Calculate the difference
+    print(f"Total execution time: {execution_time:.2f} seconds")  # Print the execution time
 
+
+    
 ##para probarlo hacerlo desde la terminal
 ## cuando este en P2-Dalgo:
 #   python a compilar |  archivo in  |    archivo out
 #   python P2.py      |      P2.in   |      P2.out
-
-
-# QUE NOS FALTA
-# PROCEDIMIENTO:
-# 1. Hallar el camino euleriano
-# 2. Para el euleriano, hallar el costo total, para ello:
-#   2.1. Hallar el costo de cada conexion entre los vertices fundamentales, 
-    # esto significa que se debe hallar el camino minimo (dijkstra) entre cada par de vertices fundamentales
-    # Si es 3 con 3, se halla el camino minimo entre 3 con -3 y así sucesivamente
-#   2.2. Ir sumando los costos de las conexiones entre los vertices fundamentales
-# 3. Retornar el camino incluyendo los atomos libres, y retornar el costo
