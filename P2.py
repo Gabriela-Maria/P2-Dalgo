@@ -289,6 +289,7 @@ class Caso:
             self.matriz_grafo, self.diccionario_indices = self.grafo_completo.crear_matriz_ady()  # Agrega los paréntesis para invocar el método y captura los valores devueltos
             caminos_fundamentales = self.grafo_completo.dijkstra_para_fundamentales_repetidos()
             camino_final = self.grafo_completo.generar_camino_conectado(camino_euleriano, caminos_fundamentales)
+            
             ############################################################################## para no hacerle dijkstra a todos los vertices, estos son los vertices fundamentales repetidos
            ## self.vertices_iterables = self.grafo_completo.vertices_fundamentales_repetidos()
             ##print("Vertices fundamentales repetidos:", self.vertices_iterables)
